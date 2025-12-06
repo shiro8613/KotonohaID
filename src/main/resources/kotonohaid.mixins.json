@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.shiro8613.kotonohaid.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ItemArgumentMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
