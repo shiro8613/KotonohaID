@@ -3,19 +3,17 @@
   "id": "kotonohaid",
   "version": "${version}",
   "name": "KotonohaID",
-  "description": "",
-  "authors": [],
+  "description": "アイテムの名前からidを補完します",
+  "authors": ["shiro8613(toms0910)"],
   "contact": {},
   "license": "All-Rights-Reserved",
   "icon": "assets/kotonohaid/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
-      "dev.shiro8613.kotonohaid.client.KotonohaidClient"
-    ],
-    "main": [
       "dev.shiro8613.kotonohaid.Kotonohaid"
     ]
+
   },
   "mixins": [
     "kotonohaid.mixins.json"

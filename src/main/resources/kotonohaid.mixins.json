@@ -4,9 +4,9 @@
   "package": "dev.shiro8613.kotonohaid.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ItemArgumentMixin"
   ],
   "client": [
+    "ChatInputSuggestorMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,10 +1,12 @@
 package dev.shiro8613.kotonohaid;
 
-import net.fabricmc.api.ModInitializer;
+import com.mojang.logging.LogUtils;
+import net.fabricmc.api.ClientModInitializer;
 
-public class Kotonohaid implements ModInitializer {
+public class Kotonohaid implements ClientModInitializer {
 
     @Override
-    public void onInitialize() {
+    public void onInitializeClient() {
+        LogUtils.getLogger().info("KotonohaID load complete");
     }
 }
