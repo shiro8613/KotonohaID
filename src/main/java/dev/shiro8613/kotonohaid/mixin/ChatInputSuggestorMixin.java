@@ -2,11 +2,13 @@ package dev.shiro8613.kotonohaid.mixin;
 
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,7 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Pattern;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Mixin(ChatInputSuggestor.class)
 public abstract class ChatInputSuggestorMixin {
@@ -32,11 +35,15 @@ public abstract class ChatInputSuggestorMixin {
     @Shadow protected abstract void showCommandSuggestions();
 
     @Unique
-    private final Pattern idPattern = Pattern.compile("^[a-z0-9._-]+:[a-z0-9/._-]+$");
-
-    @Unique
     private boolean idSuggestion = false;
 
+    @Unique
+    private static final Logger LOGGER = LogUtils.getLogger();
+
+    @Inject(method = "clearWindow", at = @At("HEAD"))
+    public void kotonoha$clearWindow(CallbackInfo ci) {
+        idSuggestion = false;
+    }
 
     @Inject(method = "refresh", at = @At(value = "INVOKE", target = "Lcom/mojang/brigadier/CommandDispatcher;getCompletionSuggestions(Lcom/mojang/brigadier/ParseResults;I)Ljava/util/concurrent/CompletableFuture;", shift = At.Shift.AFTER), cancellable = true)
     public void kotonoha$refresh(CallbackInfo ci) {
@@ -48,12 +55,25 @@ public abstract class ChatInputSuggestorMixin {
             if (pendingSuggestions == null) {
                 return;
             }
-            Suggestions sug = pendingSuggestions.get();
-            if (sug.getList().stream().anyMatch(s -> idPattern.matcher(s.getText()).matches())) {
+            if (!pendingSuggestions.isDone()) {
+                return;
+            }
+
+            Suggestions sug = pendingSuggestions.get(2, TimeUnit.SECONDS);
+            if (sug.getList().stream().anyMatch(s -> {
+                Identifier id = Identifier.tryParse(s.getText());
+                if (id == null) {
+                    return false;
+                }
+                return Registries.ITEM.containsId(id);
+            })) {
                 idSuggestion = true;
             }
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            LOGGER.warn("[KotonohaID] except", e);
+            return;
+        } catch (TimeoutException e) {
+            return;
         }
 
         if (idSuggestion) {
