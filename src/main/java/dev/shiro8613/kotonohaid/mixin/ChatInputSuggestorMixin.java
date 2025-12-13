@@ -83,7 +83,7 @@ public abstract class ChatInputSuggestorMixin {
                 final String searchText = textField.getText().substring(lastSpaceIndex + 1);
                 SuggestionsBuilder builder = new SuggestionsBuilder(truncatedInput, lastSpaceIndex + 1);
                 List<String> sug = Registries.ITEM.stream()
-                        .filter(t -> t.getName().getString().startsWith(searchText))
+                        .filter(t -> t.getName().getString().contains(searchText))
                         .map(Registries.ITEM::getId)
                         .map(Identifier::toString)
                         .toList();
