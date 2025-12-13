@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ClientModInitializer;
 
 public class Kotonohaid implements ClientModInitializer {
+    public static boolean idSuggestion = false;
 
     @Override
     public void onInitializeClient() {

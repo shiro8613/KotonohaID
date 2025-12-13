@@ -3,9 +3,13 @@ package dev.shiro8613.kotonohaid.mixin;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
+import dev.shiro8613.kotonohaid.FuzzySearch;
+import dev.shiro8613.kotonohaid.Kotonohaid;
+import dev.shiro8613.kotonohaid.Tuple;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.registry.Registries;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -35,20 +39,19 @@ public abstract class ChatInputSuggestorMixin {
     @Shadow protected abstract void showCommandSuggestions();
 
     @Unique
-    private boolean idSuggestion = false;
-
-    @Unique
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    @Inject(method = "clearWindow", at = @At("HEAD"))
-    public void kotonoha$clearWindow(CallbackInfo ci) {
-        idSuggestion = false;
+    @Inject(method = "setWindowActive", at = @At("HEAD"))
+    public void kotonoha$setWindowActive(boolean windowActive, CallbackInfo ci) {
+        if (!windowActive) {
+            Kotonohaid.idSuggestion = false;
+        }
     }
 
     @Inject(method = "refresh", at = @At(value = "INVOKE", target = "Lcom/mojang/brigadier/CommandDispatcher;getCompletionSuggestions(Lcom/mojang/brigadier/ParseResults;I)Ljava/util/concurrent/CompletableFuture;", shift = At.Shift.AFTER), cancellable = true)
     public void kotonoha$refresh(CallbackInfo ci) {
         if (textField.getText().endsWith(" ")) {
-            idSuggestion = false;
+            Kotonohaid.idSuggestion = false;
         }
 
         try {
@@ -67,7 +70,7 @@ public abstract class ChatInputSuggestorMixin {
                 }
                 return Registries.ITEM.containsId(id);
             })) {
-                idSuggestion = true;
+                Kotonohaid.idSuggestion = true;
             }
         } catch (InterruptedException | ExecutionException e) {
             LOGGER.warn("[KotonohaID] except", e);
@@ -76,20 +79,19 @@ public abstract class ChatInputSuggestorMixin {
             return;
         }
 
-        if (idSuggestion) {
+        if (Kotonohaid.idSuggestion) {
             int lastSpaceIndex = textField.getText().lastIndexOf(' ');
             if (lastSpaceIndex != -1) {
                 final String truncatedInput = textField.getText().substring(0, textField.getCursor());
                 final String searchText = textField.getText().substring(lastSpaceIndex + 1);
                 SuggestionsBuilder builder = new SuggestionsBuilder(truncatedInput, lastSpaceIndex + 1);
-                List<String> sug = Registries.ITEM.stream()
-                        .filter(t -> t.getName().getString().contains(searchText))
-                        .map(Registries.ITEM::getId)
-                        .map(Identifier::toString)
+                List<Tuple<Text, String>> sug = Registries.ITEM.stream()
+                        .filter(t -> FuzzySearch.search(t.getName().getString(), searchText))
+                        .map(i -> new Tuple<Text, String>(i.getName(), Registries.ITEM.getId(i).toString()))
                         .toList();
 
                 if (!sug.isEmpty()) {
-                    sug.forEach(builder::suggest);
+                    sug.forEach((t -> builder.suggest(t.b(), t.a())));
                     pendingSuggestions.obtrudeValue(builder.build());
                     showCommandSuggestions();
                     ci.cancel();

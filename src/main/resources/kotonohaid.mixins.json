@@ -6,7 +6,8 @@
   "mixins": [
   ],
   "client": [
-    "ChatInputSuggestorMixin"
+    "ChatInputSuggestorMixin",
+    "SuggestionWindowMixin"
   ],
   "injectors": {
     "defaultRequire": 1
