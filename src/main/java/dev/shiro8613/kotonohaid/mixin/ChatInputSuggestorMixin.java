@@ -87,7 +87,7 @@ public abstract class ChatInputSuggestorMixin {
                 SuggestionsBuilder builder = new SuggestionsBuilder(truncatedInput, lastSpaceIndex + 1);
                 List<Tuple<Text, String>> sug = Registries.ITEM.stream()
                         .filter(t -> FuzzySearch.search(t.getName().getString(), searchText))
-                        .map(i -> new Tuple<Text, String>(i.getName(), Registries.ITEM.getId(i).toString()))
+                        .map(i -> new Tuple<>(i.getName(), Registries.ITEM.getId(i).toString()))
                         .toList();
 
                 if (!sug.isEmpty()) {
